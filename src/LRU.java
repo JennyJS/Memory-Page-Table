@@ -24,7 +24,7 @@ public class LRU {
     }
     
     final Page[] pageArr;
-    int pageSize;
+    final int pageSize;
     
     private LRU (int pageCount, int pageSize){
         pageArr = new Page[pageCount];
@@ -34,11 +34,11 @@ public class LRU {
     /**
      * Get logical page indexes
      * */
-    private List<Integer> getPageIndexes(int address, int length) {
+    private List<Integer> getPageIndexesInLogicalMem(int address, int length) {
         List<Integer> pages = new LinkedList<>();
         int start = (int) Math.floor(address / pageSize);
         int end = (int) (Math.ceil((address + length)/pageSize) - 1);
-        for (int i = start; i < end; i++){
+        for (int i = start; i <= end; i++){
             pages.add(i);
         }
         return pages;
@@ -46,53 +46,26 @@ public class LRU {
 
     
     public void read(int address, int length){
-        boolean canFindInPageTable = false;
-        int requiredPage;
 
-        List<Integer> pages = getPageIndexes(address, length);
-
-        for (int i = 0; i < pageArr.length; i++){
-            int j = 0;
-            int tmpI = i;
-            while (pageArr[i].pageNo == pages.get(j) && j < pages.size()){
-                i++;
-                j++;
-            }
-
-
-            if (j == pages.size()){
-                System.out.println("Reading from " + tmpI + " in page table");
-                canFindInPageTable = true;
-            } else {
-                i = tmpI;
-            }
+        List<Integer> pages = getPageIndexesInLogicalMem(address, length);
+        int readIndex = findPagesFromPageTable(pages);
+        if (readIndex >= 0) {
+            readFromPageTable(readIndex, length);
+            return;
         }
 
+        // read from logical memory code magically happens here ...
 
-        // can't find from physical memory, then copy from logical memory
-        if (!canFindInPageTable){
-            // check whether need to call kick function or not
-            requiredPage = (int)Math.ceil(length / pageSize);
-            int numOfEmpty = 0;
-            for (int i = 0; i < pageArr.length; i++){
-                // find the max consecutive empty pages
-                if (pageArr[i].isEmpty()){
-                    numOfEmpty++;
-                } else {
-                    numOfEmpty = 0;
-                }
-            }
+        // Insert pages to page table
+        int insertIndex = findEmptyBlockInPageTable(pages);
 
-            // if not enough space, we need to tick someone out, and put sb in
-            // call put to put on physical memory
-            // keep it clean
-
-            if (numOfEmpty < requiredPage){
-                int startingIndex = kick(pages);
-                writeBackToPageTable(pages, startingIndex,startingIndex + requiredPage );
-            }
+        if (insertIndex < 0){
+            // We don't have enough empty space in page table, need to kick off LRU
+            insertIndex = findLRUPagesToKickOff(pages);
+            kickPages(pages, insertIndex);
         }
 
+        writeBackToPageTable(pages, insertIndex, insertIndex + length);
     }
 
     public void write(){
@@ -106,29 +79,23 @@ public class LRU {
 
     }
 
-    public int kick(List<Integer> pages){
-        // check the one which is LRU, and kick it
 
-        // if more than one, kick the one which is clean
-        // if all clean or dirty, randomly kick
-
-        int startingIndex = findStartIndexToKickOff(pages);
-
-        //if dirty, write back
-        for (int i = startingIndex; i < pages.size(); i++){
+    /**
+     * Find consecutive pages to kick (LRU rule) and return starting index kick
+     * */
+    public int kickPages(List<Integer> pages, int kickStartIndex){
+        for (int i = kickStartIndex; i < pages.size(); i++){
             if (!pageArr[i].isClean){
                 System.out.println("Writing back to logical memory first for page " + pageArr[i].pageNo);
                 pageArr[i].reset();
             }
         }
 
-        return startingIndex;
-
-        // Now we know to kick from startIndexToKick
+        return kickStartIndex;
     }
 
 
-    public int findStartIndexToKickOff(List<Integer> pages){
+    private int findLRUPagesToKickOff(List<Integer> pages){
         int leastFrequency = 0;
         int cleanCount = 0;
         final int count = pages.size();
@@ -167,7 +134,7 @@ public class LRU {
 
     private void writeBackToPageTable (List<Integer> pages, int start, int end){
         int indexOfPages = 0;
-        for (int i = start; i < end; i++){
+        for (int i = start; i <= end; i++){
             pageArr[i].pageNo = pages.get(indexOfPages);
             indexOfPages++;
             pageArr[i].frequency = 1 << 31; //appending 1
@@ -187,4 +154,54 @@ public class LRU {
     }
 
 
+    /**
+     * Check if page table contains data need to read
+     * */
+    private int findPagesFromPageTable(List<Integer> pages){
+        for (int i = 0; i < pageArr.length - pages.size(); i++){
+            boolean found = true;
+            for (int j = 0; j < pages.size(); j++){
+                if (pageArr[i + j].pageNo != pages.get(j)){
+                    found = false;
+                    break;
+                }
+            }
+            if (found) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private void readFromPageTable(int startIndex, int length) {
+        // Update frequency
+    }
+
+    /**
+     * Search in page table to see if we can find enough consecutive pages, return -1,if not found
+     * */
+    private int findEmptyBlockInPageTable(List<Integer> pages) {
+
+        int startingIndex = -1;
+        int numOfEmpty = 0;
+        for (int i = 0; i < pageArr.length; i++){
+            // find the max consecutive empty pages
+            if (pageArr[i].isEmpty()){
+                if (startingIndex == -1){
+                    startingIndex = i;
+                }
+                numOfEmpty++;
+
+                if (numOfEmpty >= pages.size()){
+                    return startingIndex;
+                }
+
+            } else {
+                numOfEmpty = 0;
+                startingIndex = -1;
+            }
+        }
+        return -1;
+    }
 }
