@@ -50,7 +50,8 @@ public class LRU {
         List<Integer> pages = getPageIndexesInLogicalMem(address, length);
         int readIndex = findPagesFromPageTable(pages);
         if (readIndex >= 0) {
-            readFromPageTable(readIndex, length);
+            boolean keepClean = true;
+            readFromPageTable(readIndex, length, keepClean);
             return;
         }
 
@@ -65,18 +66,33 @@ public class LRU {
             kickPages(pages, insertIndex);
         }
 
-        writeBackToPageTable(pages, insertIndex, insertIndex + length);
+        writeBackToPageTable(pages, insertIndex, insertIndex + length/pageSize, true);
     }
 
-    public void write(){
-        // check whether can write successfully
+    public void write(int address, int length){
+        //translate the address and length to page numbers in logical memory
+        List<Integer> pages = getPageIndexesInLogicalMem(address, length);
 
-        // check whether need to call kick function or not
+        // check whether can write directly on main page table
+        int writeIndex = findPagesFromPageTable(pages);
+        if (writeIndex > 0) {
+            boolean keepClean = false;
+            readFromPageTable(writeIndex, length, keepClean);
+            return;
+        }
 
-        // call put to write on physical memory
+        //read from logical memory happens here...
 
-        // keep it dirty
+        //insert page to page table
+        int insertIndex = findEmptyBlockInPageTable(pages);
 
+        if (insertIndex < 0){
+            // not enough empty space, need to kick off according LRU algorithm
+            insertIndex = findLRUPagesToKickOff(pages);
+            kickPages(pages, insertIndex);
+        }
+
+        writeBackToPageTable(pages, insertIndex, insertIndex + length/pageSize, false);
     }
 
 
@@ -132,25 +148,38 @@ public class LRU {
 
     }
 
-    private void writeBackToPageTable (List<Integer> pages, int start, int end){
+    private void writeBackToPageTable (List<Integer> pages, int start, int end, boolean isClean){
         int indexOfPages = 0;
         for (int i = start; i <= end; i++){
             pageArr[i].pageNo = pages.get(indexOfPages);
             indexOfPages++;
-            pageArr[i].frequency = 1 << 31; //appending 1
+            pageArr[i].isClean = isClean;
         }
+        updateFrequency(true, start, end, isClean);
+        updateFrequency(false, start, end, isClean);
 
+    }
 
-        //appending 0 to the rest of the pageArr
+    /**
+     * if outDate is true, appending 1 to the front; if false, appending 0 to the rest.
+     **/
 
-        for (int m = 0; m < start; m++){
-            pageArr[m].frequency = pageArr[m].frequency >> 1;
+    public void updateFrequency (boolean outDate, int start, int end, boolean isClean) {
+        if (outDate){
+            for (int i = start; i < end; i++){
+                pageArr[i].isClean = isClean;
+                pageArr[i].frequency >>= 1;
+                pageArr[i].frequency |= 1 << (pageSize - 1);
+            }
+        } else {
+            for (int m = 0; m < start; m++){
+                pageArr[m].frequency = pageArr[m].frequency >> 1;
+            }
+
+            for (int n = end; n < pageArr.length; n++){
+                pageArr[n].frequency = pageArr[n].frequency >> 1;
+            }
         }
-
-        for (int n = end; n < pageArr.length; n++){
-            pageArr[n].frequency = pageArr[n].frequency >> 1;
-        }
-
     }
 
 
@@ -174,8 +203,13 @@ public class LRU {
         return -1;
     }
 
-    private void readFromPageTable(int startIndex, int length) {
-        // Update frequency
+    /**
+     * Magically get data from page table
+     * Update pages frequency
+     * */
+    private void readFromPageTable(int startIndex, int length, boolean isClean) {
+
+        updateFrequency(true, startIndex, startIndex + length/pageSize, isClean);
     }
 
     /**
