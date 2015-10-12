@@ -36,9 +36,7 @@ public class P2 {
                 // parse wordSize
                 if (wordSize == -1){
                     try{
-                        int s = input.indexOf("(") + 1;
-                        int e = input.indexOf(")");
-                        wordSize = Integer.parseInt(input.substring(s, e));
+                        wordSize = Integer.parseInt(getStringInParentheses(input));
                         if (wordSize % 2 != 0){
                             System.err.println("Invalid wordSize " + wordSize);
                             return;
@@ -49,9 +47,7 @@ public class P2 {
                     }
                 } else if (memorySize == -1){ // parse memorySize
                     try{
-                        int s = input.indexOf("(") + 1;
-                        int e = input.indexOf(")");
-                        String str = input.substring(s, e);
+                        String str = getStringInParentheses(input);
                         long unit = convertUnit(str);
                         Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
                         int integer = in.nextInt();
@@ -70,21 +66,43 @@ public class P2 {
                     }
                 } else if (pageSize == -1){ // parse pageSize
                     try{
-                        int s = input.indexOf("(") + 1;
-                        int e = input.indexOf(")");
-                        String str = input.substring(s, e);
+                        String str = getStringInParentheses(input);
                         long unit  = convertUnit(str);
                         Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
                         int integer = in.nextInt();
                         pageSize = integer * unit;
+                        if (pageSize % 2 != 0) {
+                            System.err.println("Invalid pageSize " + memorySize);
+                            return;
+                        }
 
                     } catch (NumberFormatException e){
                         System.out.println("Error parsing pageSize " + input);
                         return;
                     }
+                } else if (input.contains("read")){
+
+                    int address = -1;
+                    long length = -1;
+                    if (address < 0 || length < 0){
+                        System.err.println("Invalid operation");
+                        return;
+                    }
+                    parseOperationParameters(input, address, length);
+                    //call read function
+                    //...
+                } else if (input.contains("write")){
+
+                    int address = -1;
+                    long length = -1;
+                    if (address < 0 || length < 0){
+                        System.err.println("Invalid operation");
+                        return;
+                    }
+                    parseOperationParameters(input, address, length);
+                    //call write function
+                    //...
                 }
-
-
 
             }
 
@@ -113,6 +131,30 @@ public class P2 {
            unit = Integer.parseInt(str);
         }
         return unit;
+    }
+
+    public static String getStringInParentheses(String input){
+        int s = input.indexOf("(") + 1;
+        int e = input.indexOf(")");
+        return input.substring(s, e);
+    }
+
+    public static void parseOperationParameters(String input, int address, long length){
+        String str = getStringInParentheses(input);
+        String[] readParameter = str.split(",");
+        String addressStr = readParameter[0];
+        String lengthStr = readParameter[1];
+        String addressInHex = addressStr.split("0x")[1];
+        address = Integer.parseInt(addressInHex, 16);
+
+        Scanner in = new Scanner(lengthStr).useDelimiter("[^0-9]+");
+        int integer = in.nextInt();
+
+        String integerString = Integer.toString(integer);
+        String unit = lengthStr.split(integerString)[1];
+
+        length = integer * convertUnit(unit);
+
 
     }
 }

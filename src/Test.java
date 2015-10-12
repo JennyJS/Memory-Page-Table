@@ -18,7 +18,12 @@ public class Test {
     public void test2(){
         Scanner in = new Scanner("32KB").useDelimiter("[^0-9]+");
         int integer = in.nextInt();
-        System.out.print(integer);
-    }
+        System.out.println(integer);
+        int a = Integer.parseInt("e6630", 16);
+        System.out.println(a);
 
+        String str = "0x6350";
+        String[] strArr = str.split("0x");
+        System.out.println(Integer.parseInt(strArr[1]));
+    }
 }
