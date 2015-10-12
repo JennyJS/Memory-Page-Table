@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Scanner;
@@ -14,8 +15,9 @@ public class P2 {
         long pageSize = -1;
         try{
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+//            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
+            BufferedReader br = new BufferedReader(new FileReader("/Users/jenny/Java_workspace/COEN283_P2/src/t20.dat"));
             String input;
 
             while((input=br.readLine())!=null){
@@ -104,6 +106,7 @@ public class P2 {
             return;
         }
 
+        System.out.println("wordSize: " + wordSize + " memorySize: " + memorySize + " pageSize: " + pageSize);
 
     }
 

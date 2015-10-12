@@ -1,0 +1,24 @@
+wordSize(16)    		# this can be 16, 32, or 64
+# memorySize can be any power of two, alligned with word size,
+# and less than or equal to logical address
+memorySize(32KB)			# unit can be B, KB, MB, GB, and TB
+pageSize(4KB)
+write(0x4000,8B)     # starting address, number of bytes accessed
+read(0x8000, 1KB)
+read(0x3800,400B)		# cross block boundary
+read(0x3600, 26B)
+write(0x3700, 1B)	# same block as 0x3600
+write(0x400,9B)     
+read(0x4200, 2KB)
+read(0x330,1KB)		
+read(0x350, 16B)
+write(0x320, 512B)	
+read(0x7000, 1KB)
+read(0x1800,512B)		
+read(0x2600, 16B)
+write(0xa700, 1B)	
+write(0xc00,8B)     
+read(0xf200, 1KB)
+read(0xe330,512B)		
+read(0x6350, 16B)
+write(0x5320, 1KB)	

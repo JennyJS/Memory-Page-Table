@@ -10,7 +10,7 @@ public class ParseUtil {
      * */
     public static long convertUnit(String str) {
         long unit;
-        if (str.startsWith("KB")){
+        if (str.contains("KB")){
             unit = 1 << 10;
         } else if (str.contains("M")){
             unit = 1 << 20;
@@ -18,7 +18,7 @@ public class ParseUtil {
             unit = 1 << 30;
         } else if (str.contains("T")){
             unit = 1 << 40;
-        } else if (str.startsWith("B")){
+        } else if (str.contains("B")){
             unit = 1L;
         } else {
             throw new IllegalArgumentException("Invalid memory unit:"  + str);
