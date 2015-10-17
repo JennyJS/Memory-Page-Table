@@ -1,4 +1,7 @@
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.CompareGenerator;
+
 import java.util.*;
+
 
 /**
  * Created by jenny on 10/10/15.
@@ -20,6 +23,14 @@ public class LRU {
 
         private boolean isEmpty() {
             return pageNo < 0;
+        }
+    }
+
+
+    private static class PageComparator implements Comparator<Page>{
+        @Override
+        public int compare(Page p1, Page p2) {
+            return p1.frequency - p2.frequency;
         }
     }
     
@@ -48,25 +59,33 @@ public class LRU {
     public void read(int address, int length){
 
         List<Integer> pages = getPageIndexesInLogicalMem(address, length);
+        // check whether can read directly from main page table
         int readIndex = findPagesFromPageTable(pages);
-        if (readIndex >= 0) {
+
+        //if everything we need to read is in page table, update the frequencies of the pages
+        if (readIndex == 0) {
             boolean keepClean = true;
-            readFromPageTable(readIndex, length, keepClean);
+            readFromPageTable(pages, keepClean);
             return;
         }
 
-        // read from logical memory code magically happens here ...
+        //read from logical memory happens here...
 
-        // Insert pages to page table
-        int insertIndex = findEmptyBlockInPageTable(pages);
-
-        if (insertIndex < 0){
-            // We don't have enough empty space in page table, need to kick off LRU
-            insertIndex = findLRUPagesToKickOff(pages);
-            kickPages(pages, insertIndex);
+        //check my many empty spot left in page table, if smaller than the number we need, call LRU to kick sb out, till enough space
+        List<Integer> emptyList = findEmptyBlockInPageTable();
+        List<Integer> kickList = new LinkedList<>();
+        if (emptyList.size() < readIndex){
+            kickList = findLRUPagesToKickOff(readIndex - emptyList.size());
         }
 
-        writeBackToPageTable(pages, insertIndex, insertIndex + length/pageSize, true);
+        //real kick
+        kickPages(kickList);
+
+        //write back to page table
+        writeBackToPageTable(pages, true);
+
+        //***************************
+
     }
 
     public void write(int address, int length){
@@ -75,167 +94,138 @@ public class LRU {
 
         // check whether can write directly on main page table
         int writeIndex = findPagesFromPageTable(pages);
-        if (writeIndex > 0) {
+
+        //if everything we need to read is in page table, update the frequencies of the pages
+        if (writeIndex == 0) {
             boolean keepClean = false;
-            readFromPageTable(writeIndex, length, keepClean);
+            readFromPageTable(pages, keepClean);
             return;
         }
 
         //read from logical memory happens here...
 
         //insert page to page table
-        int insertIndex = findEmptyBlockInPageTable(pages);
-
-        if (insertIndex < 0){
-            // not enough empty space, need to kick off according LRU algorithm
-            insertIndex = findLRUPagesToKickOff(pages);
-            kickPages(pages, insertIndex);
+        List<Integer> emptyList = findEmptyBlockInPageTable();
+        List<Integer> kickList = new LinkedList<>();
+        if (emptyList.size() < writeIndex){
+            kickList = findLRUPagesToKickOff(writeIndex - emptyList.size());
         }
 
-        writeBackToPageTable(pages, insertIndex, insertIndex + length/pageSize, false);
+        //kick
+        kickPages(kickList);
+
+        //write back to page table
+        writeBackToPageTable(pages, true);
     }
 
 
     /**
-     * Find consecutive pages to kick (LRU rule) and return starting index kick
+     * Find the pages to kick (LRU rule)
      * */
-    public int kickPages(List<Integer> pages, int kickStartIndex){
-        for (int i = kickStartIndex; i < pages.size(); i++){
-            if (!pageArr[i].isClean){
-                System.out.println("Writing back to logical memory first for page " + pageArr[i].pageNo);
-                pageArr[i].reset();
-            }
-        }
-
-        return kickStartIndex;
-    }
-
-
-    private int findLRUPagesToKickOff(List<Integer> pages){
-        int leastFrequency = 0;
-        int cleanCount = 0;
-        final int count = pages.size();
-        int startIndexToKick = -1;
-
-
-        // Calculate initial frequency count;
-        for (int i = 0; i < count; i++) {
-            leastFrequency += pageArr[i].frequency;
-            if (pageArr[i].isClean) {
-                cleanCount++;
-            }
-        }
-
-        int tmpFreq = leastFrequency;
-        int tmpCleanCount = cleanCount;
-
-        int tail = count;
-        while(tail < pageArr.length) {
-            tmpFreq -= pageArr[tail - count].frequency;
-            tmpCleanCount -= pageArr[tail - count].isClean ? 1 : 0;
-            tmpFreq += pageArr[tail].frequency;
-            tmpCleanCount += pageArr[tail].isClean ? 1 : 0;
-
-            if (tmpFreq < leastFrequency || (tmpFreq == leastFrequency && tmpCleanCount < cleanCount)) {
-                startIndexToKick = tail - count + 1;
-                leastFrequency = tmpFreq;
-            }
-
-            tail++;
-        }
-
-        return startIndexToKick;
-
-    }
-
-    private void writeBackToPageTable (List<Integer> pages, int start, int end, boolean isClean){
-        int indexOfPages = 0;
-        for (int i = start; i <= end; i++){
-            pageArr[i].pageNo = pages.get(indexOfPages);
-            indexOfPages++;
-            pageArr[i].isClean = isClean;
-        }
-        updateFrequency(true, start, end, isClean);
-        updateFrequency(false, start, end, isClean);
-
-    }
-
-    /**
-     * if outDate is true, appending 1 to the front; if false, appending 0 to the rest.
-     **/
-
-    public void updateFrequency (boolean outDate, int start, int end, boolean isClean) {
-        if (outDate){
-            for (int i = start; i < end; i++){
-                pageArr[i].isClean = isClean;
-                pageArr[i].frequency >>= 1;
-                pageArr[i].frequency |= 1 << (pageSize - 1);
-            }
-        } else {
-            for (int m = 0; m < start; m++){
-                pageArr[m].frequency = pageArr[m].frequency >> 1;
-            }
-
-            for (int n = end; n < pageArr.length; n++){
-                pageArr[n].frequency = pageArr[n].frequency >> 1;
-            }
-        }
-    }
-
-
-    /**
-     * Check if page table contains data need to read
-     * */
-    private int findPagesFromPageTable(List<Integer> pages){
-        for (int i = 0; i < pageArr.length - pages.size(); i++){
-            boolean found = true;
-            for (int j = 0; j < pages.size(); j++){
-                if (pageArr[i + j].pageNo != pages.get(j)){
-                    found = false;
-                    break;
+    public void kickPages(List<Integer> kickList){
+        for (int i = 0; i < pageArr.length; i++) {
+            for (Integer integer : kickList) {
+                if (pageArr[i].pageNo == integer) {
+                    if (!pageArr[i].isClean) {
+                        System.out.println("Writing back to logical memory first for page " + pageArr[i].pageNo);
+                    }
+                    pageArr[i].reset();
                 }
             }
-            if (found) {
-                return i;
+        }
+
+    }
+
+
+    private List<Integer> findLRUPagesToKickOff(int numberToKick){
+        List<Integer> kickList = new LinkedList<>();
+
+        PageComparator pageComparator = new PageComparator();
+        PriorityQueue<Page> queue = new PriorityQueue<>(10,pageComparator);
+        for (int i = 0 ; i < pageArr.length; i++){
+            queue.add(pageArr[i]);
+        }
+
+        for (int j = 0; j < numberToKick; j++){
+            Page p = queue.peek();
+            kickList.add(p.pageNo);
+        }
+
+        return kickList;
+    }
+
+    private void writeBackToPageTable (List<Integer> pages, boolean isClean){
+        int indexOfPages = 0;
+        for (int i = 0; i < pageArr.length; i++){
+            if (pageArr[i].isEmpty()){
+                pageArr[i].pageNo = pages.get(indexOfPages);
+                indexOfPages++;
+                pageArr[i].isClean = isClean;
             }
         }
 
-        return -1;
+        updateFrequency(pages, isClean);
+    }
+
+    /**
+     * find the pages we need from page table and append 1 to the front of those pages,
+     * append 0 to the rest
+     **/
+
+    public void updateFrequency (List<Integer> pages, boolean isClean) {
+        for (int i = 0; i < pageArr.length; i++){
+            for(Integer integer : pages){
+                if (pageArr[i].pageNo == integer){
+                    pageArr[i].isClean = isClean;
+                    pageArr[i].frequency >>= 1;
+                    pageArr[i].frequency |= 1 << (pageSize - 1);
+                } else {
+                    pageArr[i].frequency >>= 1;
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Check if page table contains data need to read,
+     * return 0 is page table contains all,
+     * else return the number of pages need to lead from logical memory
+     * */
+    private int findPagesFromPageTable(List<Integer> pages){
+        int num = pages.size();
+        for (int i = 0; i < pageArr.length; i++){
+            for (Integer integer : pages){
+                if (pageArr[i].pageNo == integer){
+                    num--;
+                }
+
+            }
+        }
+
+        return pages.size() - num;
     }
 
     /**
      * Magically get data from page table
      * Update pages frequency
      * */
-    private void readFromPageTable(int startIndex, int length, boolean isClean) {
+    private void readFromPageTable(List<Integer> pages, boolean isClean) {
 
-        updateFrequency(true, startIndex, startIndex + length/pageSize, isClean);
+        updateFrequency(pages, isClean);
     }
 
     /**
      * Search in page table to see if we can find enough consecutive pages, return -1,if not found
      * */
-    private int findEmptyBlockInPageTable(List<Integer> pages) {
-
-        int startingIndex = -1;
-        int numOfEmpty = 0;
+    private List<Integer> findEmptyBlockInPageTable() {
+        List<Integer> emptyPages = new LinkedList<>();
         for (int i = 0; i < pageArr.length; i++){
-            // find the max consecutive empty pages
             if (pageArr[i].isEmpty()){
-                if (startingIndex == -1){
-                    startingIndex = i;
-                }
-                numOfEmpty++;
-
-                if (numOfEmpty >= pages.size()){
-                    return startingIndex;
-                }
-
-            } else {
-                numOfEmpty = 0;
-                startingIndex = -1;
+                emptyPages.add(pageArr[i].pageNo);
             }
         }
-        return -1;
+
+        return emptyPages;
     }
 }
