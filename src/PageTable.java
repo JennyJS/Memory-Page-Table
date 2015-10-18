@@ -140,9 +140,9 @@ public class PageTable {
             for (Integer integer : kickList) {
                 if (pageArr[i].pageNo == integer) {
                     if (!pageArr[i].isClean) {
-                        System.out.println("Writing back to logical memory first for page " + pageArr[i].pageNo);
+                        System.out.println("\tWROTE_BACK \t: Logical_Page_No." + pageArr[i].pageNo + " to logical memory");
                     }
-                    System.out.println("Kicking page " + pageArr[i].pageNo + " at physical page number " + i);
+                    System.out.println("\tKICKED \t: Logical_Page_No." + pageArr[i].pageNo + " \tPhysical_Page_Index: " + i);
                     pageArr[i].reset();
                 }
             }
@@ -182,9 +182,9 @@ public class PageTable {
                     pageArr[i].frequency |= 1 << (pageArr.length - 1);
                     //System.out.print("current frequency " + Integer.toBinaryString((int)pageArr[i].frequency));
                     if (isClean){
-                        System.out.println("Reading from logical page " + integer + " to physical page " + i + " Clean");
+                        System.out.println("\tREAD \t: Logical_Page_No." + integer + " \tPhysical_Page_Index: " + i + " : CLEAN");
                     } else {
-                        System.out.println("Writing from logical page " + integer + " to physical page " + i + " Dirty");
+                        System.out.println("\tWROTE \t: Logical_Page_No." + integer + " \tPhysical_Page_Index: " + i + " : DIRTY");
                     }
 
                 } else {

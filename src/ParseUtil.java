@@ -139,7 +139,8 @@ public class ParseUtil {
             System.err.println("Error reading from IO");
             return;
         }
-
+        System.out.println();
         System.out.println("wordSize: " + wordSize.t + " memorySize: " + memorySize.t + " pageSize: " + pageSize.t);
+        System.out.println();
     }
 }

@@ -31,7 +31,9 @@ public class P2 {
 
         PageTable.init(pageCount, pageSize.t, lruPageKicker);
 
+        System.out.println("***********************************");
         System.out.println("*************** LRU ***************");
+        System.out.println("***********************************");
         for (Operation o : operations) {
             if ((o.address + o.length) > Math.pow(2, wordSize.t)){
                 System.err.println("Address : 0X" + Integer.toHexString(o.address) + " out of bound!");
@@ -49,14 +51,16 @@ public class P2 {
 
         PageKicker optPageKicker = new OPTPageKicker(operations, pageSize.t);
         PageTable.init(pageCount, pageSize.t, optPageKicker);
+        System.out.println("***************************************");
         System.out.println("*************** Optimal ***************");
+        System.out.println("***************************************");
         for (Operation o : operations) {
             if ((o.address + o.length) > Math.pow(2, wordSize.t)){
                 System.err.println("Address : 0X" + Integer.toHexString(o.address) + " out of bound!");
                 continue;
             }
 
-            System.out.println(o.type.name() + "(0x" + Integer.toHexString(o.address) + " , " + o.length + ")");
+            System.out.println(o.type.name() + "(0x" + Integer.toHexString(o.address) + " , " + o.length + "B)");
             PageTable.getInstance().process(o);
             System.out.println();
         }
