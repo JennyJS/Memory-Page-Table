@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+import java.util.Queue;
 import java.util.Scanner;
 
 /**
@@ -79,7 +80,7 @@ public class ParseUtil {
             Wrapper<Integer> wordSize,
             Wrapper<Long> memorySize,
             Wrapper<Long> pageSize,
-            List<Operation> operations
+            Queue<Operation> operations
     ){
         try{
             BufferedReader br = new BufferedReader(new FileReader("/Users/jenny/Java_workspace/COEN283_P2/src/t20.dat"));

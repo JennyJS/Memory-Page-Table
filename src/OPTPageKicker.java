@@ -4,12 +4,17 @@ import java.util.*;
  * Created by jenny on 10/18/15.
  */
 public class OPTPageKicker extends PageKicker {
-    List<Operation> operations = new LinkedList<>();
-    long pageSize;
+    final Queue<Operation> operations;
+    final long pageSize;
+
+    public OPTPageKicker(Queue<Operation> operations, long pageSize){
+        this.operations = operations;
+        this.pageSize = pageSize;
+    }
 
     @Override
     List<Integer> findPagesToKickOff(int numberToKick){
-        List<Integer> pagesNumsToBeReferenced = pageNumsToBeReferenced(operations);
+        List<Integer> pagesNumsToBeReferenced = pageNumsToBeReferenced();
         List<Integer> kickList = new LinkedList<>();
 
         Map<Integer, Integer> map = new HashMap<>();
@@ -31,8 +36,7 @@ public class OPTPageKicker extends PageKicker {
 
         //buid up a max heap
         PriorityQueue<Integer> queue = new PriorityQueue<>(PageTable.getInstance().pageArr.length, Collections.reverseOrder());
-        Set<Integer> keys = map.keySet();
-        queue.addAll(keys);
+        queue.addAll(map.keySet());
 
         // remove numToKick number of element from Maxheap
         for (int m = 0; m < numberToKick; m++){
@@ -45,12 +49,9 @@ public class OPTPageKicker extends PageKicker {
         return kickList;
     }
 
-    public OPTPageKicker(List<Operation> operations, long pageSize){
-        this.operations = operations;
-        this.pageSize = pageSize;
-    }
 
-    public List<Integer> pageNumsToBeReferenced (List<Operation> operations){
+
+    public List<Integer> pageNumsToBeReferenced (){
         List<Integer> res = new LinkedList<>();
         for (Operation o : operations){
             int pageNo = (int)(o.address / pageSize);

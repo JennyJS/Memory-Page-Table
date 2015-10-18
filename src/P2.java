@@ -1,5 +1,6 @@
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * Created by jenny on 10/11/15.
@@ -18,7 +19,7 @@ public class P2 {
         pageSize.t = -1L;
 
 
-        List<Operation> operations = new LinkedList<>();
+        Queue<Operation> operations = new LinkedList<>();
         try {
             ParseUtil.parseIntegerFromFile(wordSize, memorySize, pageSize, operations);
         } catch (RuntimeException e) {
@@ -34,7 +35,8 @@ public class P2 {
         System.out.println("***********************************");
         System.out.println("*************** LRU ***************");
         System.out.println("***********************************");
-        for (Operation o : operations) {
+        while (!operations.isEmpty()) {
+            Operation o = operations.poll();
             if ((o.address + o.length) > Math.pow(2, wordSize.t)){
                 System.err.println("Address : 0X" + Integer.toHexString(o.address) + " out of bound!");
                 continue;
@@ -54,7 +56,8 @@ public class P2 {
         System.out.println("***************************************");
         System.out.println("*************** Optimal ***************");
         System.out.println("***************************************");
-        for (Operation o : operations) {
+        while (!operations.isEmpty()) {
+            Operation o = operations.poll();
             if ((o.address + o.length) > Math.pow(2, wordSize.t)){
                 System.err.println("Address : 0X" + Integer.toHexString(o.address) + " out of bound!");
                 continue;
