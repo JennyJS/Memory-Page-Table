@@ -10,10 +10,11 @@ public class PageTable {
 
     final Page[] pageArr;
     final long pageSize;
+    private final PageKicker kicker;
 
     private static PageTable pageTable;
 
-    private PageTable(int pageCount, long pageSize){
+    private PageTable(int pageCount, long pageSize, PageKicker kicker){
         pageArr = new Page[pageCount];
         for (int i = 0; i < pageCount; i++){
             Page p = new Page();
@@ -21,10 +22,12 @@ public class PageTable {
             pageArr[i] = p;
         }
         this.pageSize = pageSize;
+        this.kicker = kicker;
     }
 
-    public static void init (int pageCount, long pageSize){
-        pageTable = new PageTable(pageCount, pageSize);
+
+    public static void init (int pageCount, long pageSize, PageKicker kicker){
+        pageTable = new PageTable(pageCount, pageSize, kicker);
     }
 
     public static PageTable getInstance(){
@@ -34,7 +37,7 @@ public class PageTable {
     /**
      * Page represents the memory unit in page table
      * */
-    private static class Page {
+    public static class Page {
         boolean isClean = true;
         int pageNo;
         long frequency;
@@ -47,27 +50,6 @@ public class PageTable {
 
         private boolean isEmpty() {
             return pageNo < 0;
-        }
-    }
-
-
-    private static class PageComparator implements Comparator<Page>{
-        @Override
-        public int compare(Page p1, Page p2) {
-//            return p1.frequency < p2.frequency ? -1 : p1.frequency == p2.frequency ? 0 : 1;
-            if (p1.frequency < p2.frequency){
-                return -1;
-            } else if (p1.frequency > p2.frequency){
-                return 1;
-            } else {
-                if (p1.isClean && !p2.isClean){
-                    return -1;
-                } else if (!p1.isClean && p2.isClean){
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }
         }
     }
 
@@ -99,7 +81,7 @@ public class PageTable {
         List<Integer> emptyList = findEmptyBlockInPageTable();
         List<Integer> kickList;
         if (emptyList.size() < readIndex){
-            kickList = findLRUPagesToKickOff(readIndex - emptyList.size());
+            kickList = kicker.findPagesToKickOff(readIndex - emptyList.size());
             //real kick
             kickPages(kickList);
         }
@@ -128,7 +110,7 @@ public class PageTable {
         List<Integer> emptyList = findEmptyBlockInPageTable();
         List<Integer> kickList;
         if (emptyList.size() < writeIndex){
-            kickList = findLRUPagesToKickOff(writeIndex - emptyList.size());
+            kickList = kicker.findPagesToKickOff(writeIndex - emptyList.size());
             //kick
             kickPages(kickList);
         }
@@ -165,23 +147,6 @@ public class PageTable {
                 }
             }
         }
-    }
-
-
-    private List<Integer> findLRUPagesToKickOff(int numberToKick){
-        List<Integer> kickList = new LinkedList<>();
-
-        PageComparator pageComparator = new PageComparator();
-        PriorityQueue<Page> queue = new PriorityQueue<>(pageArr.length,pageComparator);
-        for (int i = 0 ; i < pageArr.length; i++){
-            queue.add(pageArr[i]);
-        }
-
-        for (int j = 0; j < numberToKick; j++){
-            Page p = queue.remove();
-            kickList.add(p.pageNo);
-        }
-        return kickList;
     }
 
     private void writeBackToPageTable (List<Integer> pages, boolean isClean){
