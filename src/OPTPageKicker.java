@@ -15,7 +15,7 @@ public class OPTPageKicker extends PageKicker {
         Map<Integer, Integer> map = new HashMap<>();
         for (int i = 0; i < PageTable.getInstance().pageArr.length; i++){
             int key = -1;
-            for (int j = 0; j < pagesNumsToBeReferenced.size(); i++){
+            for (int j = 0; j < pagesNumsToBeReferenced.size(); j++){
                 if (pagesNumsToBeReferenced.get(j) == PageTable.getInstance().pageArr[i].pageNo){
                     key = j;
                     map.put(key, PageTable.getInstance().pageArr[i].pageNo);
