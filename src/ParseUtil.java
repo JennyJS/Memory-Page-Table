@@ -1,3 +1,7 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -62,5 +66,109 @@ public class ParseUtil {
 
     public static class Wrapper<T> {
         public T t;
+    }
+
+    public static void parseIntegerFromFile(
+            Wrapper<Integer> wordSize,
+            Wrapper<Long> memorySize,
+            Wrapper<Long> pageSize,
+            List<Operation> operations
+    ){
+        try{
+            BufferedReader br = new BufferedReader(new FileReader("/Users/jenny/Java_workspace/COEN283_P2/src/t20.dat"));
+            String input;
+
+            while((input=br.readLine())!=null){
+                input = input.trim();
+
+                if (input.startsWith("#")) {
+                    // ignore line starting with #
+                    continue;
+                } else {
+                    // Remove string after #
+                    int index = input.indexOf('#');
+                    if (index != -1) {
+                        input = input.substring(0, index);
+                        input = input.trim();
+                    }
+                }
+
+                // parse wordSize
+                if (wordSize.t == -1){
+                    try{
+                        wordSize.t = Integer.parseInt(ParseUtil.getStringInParentheses(input));
+                        if (wordSize.t % 2 != 0){
+                            System.err.println("Invalid wordSize " + wordSize);
+                            return;
+                        }
+                    } catch (IllegalArgumentException e){
+                        System.out.println("Error parsing wordSize " + input);
+                        return;
+                    }
+                } else if (memorySize.t == -1){ // parse memorySize
+                    try{
+                        String str = ParseUtil.getStringInParentheses(input);
+                        long unit = ParseUtil.convertUnit(str);
+                        Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
+                        int integer = in.nextInt();
+                        memorySize.t = integer * unit;
+
+
+                        //check validation
+                        if (memorySize.t % 2 != 0){
+                            System.err.println("Invalid memorySize " + memorySize);
+                            return;
+                        }
+
+                    } catch (IllegalArgumentException e){
+                        System.out.println("Error parsing memorySize " + input);
+                        return;
+                    }
+                } else if (pageSize.t == -1){ // parse pageSize
+                    try{
+                        String str = ParseUtil.getStringInParentheses(input);
+                        long unit  = ParseUtil.convertUnit(str);
+                        Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
+                        int integer = in.nextInt();
+                        pageSize.t = integer * unit;
+                        if (pageSize.t % 2 != 0) {
+                            System.err.println("Invalid pageSize " + memorySize);
+                            return;
+                        }
+
+                    } catch (IllegalArgumentException e){
+                        System.out.println("Error parsing pageSize " + input);
+                        return;
+                    }
+                } else if (input.contains("read") || input.contains("write")){
+
+                    ParseUtil.Wrapper<Integer> address = new ParseUtil.Wrapper<>();
+                    ParseUtil.Wrapper<Long> length = new ParseUtil.Wrapper<>();
+                    ParseUtil.parseOperationParameters(input, address, length);
+
+                    //call read function
+                    //...
+
+                    Operation o = new Operation();
+                    if (input.contains("read")) {
+                        // call read
+                        o.type = Operation.Type.read;
+                    } else {
+                        // call write
+                        o.type = Operation.Type.write;
+                    }
+
+                    o.address = address.t;
+                    o.length = length.t;
+                }
+            }
+
+        } catch (IOException io){
+            io.printStackTrace();
+            System.err.println("Error reading from IO");
+            return;
+        }
+
+        System.out.println("wordSize: " + wordSize + " memorySize: " + memorySize + " pageSize: " + pageSize);
     }
 }

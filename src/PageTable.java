@@ -1,4 +1,4 @@
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.CompareGenerator;
+
 
 import java.util.*;
 
@@ -6,10 +6,11 @@ import java.util.*;
 /**
  * Created by jenny on 10/10/15.
  */
-public class LRU {
-    
-    // use an array of Nodes to represent the physical memory
+public class PageTable {
 
+    /**
+     * Page represents the memory unit in page table
+     * */
     private static class Page {
         boolean isClean = true;
         int pageNo;
@@ -36,11 +37,23 @@ public class LRU {
     
     final Page[] pageArr;
     final int pageSize;
-    
-    private LRU (int pageCount, int pageSize){
+
+    private static PageTable pageTable;
+
+    private PageTable(int pageCount, int pageSize){
         pageArr = new Page[pageCount];
         this.pageSize = pageSize;
     }
+
+    public static void init (int pageCount, int pageSize){
+        pageTable = new PageTable(pageCount, pageSize);
+    }
+
+    public static PageTable getPageTable(){
+        return pageTable;
+    }
+
+
 
     /**
      * Get logical page indexes
