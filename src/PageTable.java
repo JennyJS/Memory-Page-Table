@@ -160,7 +160,7 @@ public class PageTable {
                     if (!pageArr[i].isClean) {
                         System.out.println("Writing back to logical memory first for page " + pageArr[i].pageNo);
                     }
-                    System.out.println("Kicking page " + pageArr[i].pageNo + " at physical page number " + pageArr[i].pageNo);
+                    System.out.println("Kicking page " + pageArr[i].pageNo + " at physical page number " + i);
                     pageArr[i].reset();
                 }
             }

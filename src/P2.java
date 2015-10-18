@@ -30,8 +30,9 @@ public class P2 {
 
         PageTable.init(pageCount, pageSize.t);
         for (Operation o : operations) {
-            if ((o.address + o.length) > Math.pow(2, wordSize.t) || (o.address + o.length)/pageSize.t > pageCount){
-                throw new IllegalArgumentException("Address out of bound!");
+            if ((o.address + o.length) > Math.pow(2, wordSize.t)){
+                System.err.println("Address : 0X" + Integer.toHexString(o.address) + " out of bound!");
+                continue;
             }
             PageTable.getInstance().process(o);
 
