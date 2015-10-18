@@ -54,7 +54,20 @@ public class PageTable {
     private static class PageComparator implements Comparator<Page>{
         @Override
         public int compare(Page p1, Page p2) {
-            return p1.frequency < p2.frequency ? -1 : p1.frequency == p2.frequency ? 0 : 1;
+//            return p1.frequency < p2.frequency ? -1 : p1.frequency == p2.frequency ? 0 : 1;
+            if (p1.frequency < p2.frequency){
+                return -1;
+            } else if (p1.frequency > p2.frequency){
+                return 1;
+            } else {
+                if (p1.isClean && !p2.isClean){
+                    return -1;
+                } else if (!p1.isClean && p2.isClean){
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
         }
     }
 
@@ -159,7 +172,7 @@ public class PageTable {
         List<Integer> kickList = new LinkedList<>();
 
         PageComparator pageComparator = new PageComparator();
-        PriorityQueue<Page> queue = new PriorityQueue<>(10,pageComparator);
+        PriorityQueue<Page> queue = new PriorityQueue<>(pageArr.length,pageComparator);
         for (int i = 0 ; i < pageArr.length; i++){
             queue.add(pageArr[i]);
         }
@@ -168,7 +181,6 @@ public class PageTable {
             Page p = queue.remove();
             kickList.add(p.pageNo);
         }
-
         return kickList;
     }
 
