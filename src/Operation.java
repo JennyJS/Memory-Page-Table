@@ -7,12 +7,18 @@ public class Operation {
         read, write
     }
 
-    Type type;
-    int address;
-    long length;
+    final Type type;
+    final int address;
+    final long length;
+
+    public Operation(int address, long length, Type type){
+        this.address = address;
+        this.length = length;
+        this.type = type;
+    }
 
     @Override
     public String toString(){
-        return Integer.toHexString(address);
+        return "0x" + Integer.toHexString(address);
     }
 }

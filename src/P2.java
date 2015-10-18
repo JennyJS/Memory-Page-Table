@@ -19,18 +19,18 @@ public class P2 {
 
 
         List<Operation> operations = new LinkedList<>();
-        ParseUtil.parseIntegerFromFile(wordSize, memorySize, pageSize, operations);
+        try {
+            ParseUtil.parseIntegerFromFile(wordSize, memorySize, pageSize, operations);
+        } catch (RuntimeException e) {
+            System.err.println(e.getMessage());
+        }
 
-        int pageCount = (int)(memorySize.t/pageSize.t);
+
+        int pageCount = (int)(memorySize.t / pageSize.t);
+
         PageTable.init(pageCount, pageSize.t);
-
-        for (int i = 0; i < operations.size(); i++){
-            Operation o = operations.get(i);
-            if (o.type == Operation.Type.read){
-                PageTable.getInstance().read(o.address, o.length);
-            } else {
-                PageTable.getInstance().write(o.address, o.length);
-            }
+        for (Operation o : operations) {
+            PageTable.getInstance().process(o);
         }
     }
 }

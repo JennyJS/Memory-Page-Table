@@ -9,19 +9,23 @@ import java.util.Scanner;
  */
 public class ParseUtil {
 
+    public static class Wrapper<T> {
+        public T t;
+    }
+
     /**
      * translate from KB, MB... to 2^10, 2^20
      * */
-    public static long convertUnit(String str) {
+    private static long convertUnit(String str) {
         long unit;
         if (str.contains("KB")){
-            unit = 1 << 10;
+            unit = 1L << 10;
         } else if (str.contains("M")){
-            unit = 1 << 20;
+            unit = 1L << 20;
         } else if (str.contains("G")){
-            unit = 1 << 30;
+            unit = 1L << 30;
         } else if (str.contains("T")){
-            unit = 1 << 40;
+            unit = 1L << 40;
         } else if (str.contains("B")){
             unit = 1L;
         } else {
@@ -31,14 +35,18 @@ public class ParseUtil {
         return unit;
     }
 
+    private static boolean isPowerOf2(long num){
+        return (num & (num - 1)) == 0;
+    }
+
     /**
      * input wordSize(16GB), return 16GB
      * */
-    public static String getStringInParentheses(String input){
+    private static String getStringInParentheses(String input){
         int s = input.indexOf("(") + 1;
         int e = input.indexOf(")");
         if (s < 0 || e < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Invalid input str, expect parentheses around number:" + input);
         } else {
             return input.substring(s, e);
         }
@@ -47,9 +55,12 @@ public class ParseUtil {
     /**
      * input read(0x230, 8KB), read 0x230 and 8KB
      * */
-    public static void parseOperationParameters(String input, Wrapper<Integer> address, Wrapper<Long> length){
+    private static void parseOperationParameters(String input, Wrapper<Integer> address, Wrapper<Long> length) {
         String str = getStringInParentheses(input);
         String[] readParameter = str.split(",");
+        if (readParameter.length != 2){
+            throw new IllegalArgumentException("Invalid input operation parameter " + str);
+        }
         String addressStr = readParameter[0].trim();
         String lengthStr = readParameter[1].trim();
         String addressInHex = addressStr.split("0x")[1];
@@ -62,10 +73,6 @@ public class ParseUtil {
         String unit = lengthStr.split(integerString)[1];
 
         length.t = integer * convertUnit(unit);
-    }
-
-    public static class Wrapper<T> {
-        public T t;
     }
 
     public static void parseIntegerFromFile(
@@ -95,77 +102,40 @@ public class ParseUtil {
 
                 // parse wordSize
                 if (wordSize.t == -1){
-                    try{
-                        wordSize.t = Integer.parseInt(ParseUtil.getStringInParentheses(input));
-                        if (wordSize.t % 2 != 0){
-                            System.err.println("Invalid wordSize " + wordSize);
-                            return;
-                        }
-                    } catch (IllegalArgumentException e){
-                        System.out.println("Error parsing wordSize " + input);
-                        return;
+                    wordSize.t = Integer.parseInt(ParseUtil.getStringInParentheses(input));
+                    if (!isPowerOf2(wordSize.t)){
+                        throw new IllegalArgumentException("Invalid wordSize: " + wordSize.t);
                     }
                 } else if (memorySize.t == -1){ // parse memorySize
-                    try{
-                        String str = ParseUtil.getStringInParentheses(input);
-                        long unit = ParseUtil.convertUnit(str);
-                        Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
-                        int integer = in.nextInt();
-                        memorySize.t = integer * unit;
+                    String str = ParseUtil.getStringInParentheses(input);
+                    long unit = ParseUtil.convertUnit(str);
+                    Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
+                    int integer = in.nextInt();
+                    memorySize.t = integer * unit;
 
 
-                        //check validation
-                        if (memorySize.t % 2 != 0){
-                            System.err.println("Invalid memorySize " + memorySize);
-                            return;
-                        }
-
-                    } catch (IllegalArgumentException e){
-                        System.out.println("Error parsing memorySize " + input);
-                        return;
+                    //check validation
+                    if (!isPowerOf2(memorySize.t)){
+                        throw new IllegalArgumentException("Invalid memorySize, should be power of 2: " + memorySize.t);
                     }
                 } else if (pageSize.t == -1){ // parse pageSize
-                    try{
-                        String str = ParseUtil.getStringInParentheses(input);
-                        long unit  = ParseUtil.convertUnit(str);
-                        Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
-                        int integer = in.nextInt();
-                        pageSize.t = integer * unit;
-                        if (pageSize.t % 2 != 0) {
-                            System.err.println("Invalid pageSize " + memorySize);
-                            return;
-                        }
-
-                    } catch (IllegalArgumentException e){
-                        System.out.println("Error parsing pageSize " + input);
-                        return;
+                    String str = ParseUtil.getStringInParentheses(input);
+                    long unit  = ParseUtil.convertUnit(str);
+                    Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
+                    int integer = in.nextInt();
+                    pageSize.t = integer * unit;
+                    if (!isPowerOf2(pageSize.t)) {
+                        throw new IllegalArgumentException("Invalid pageSize " + memorySize);
                     }
                 } else if (input.contains("read") || input.contains("write")){
-
                     ParseUtil.Wrapper<Integer> address = new ParseUtil.Wrapper<>();
                     ParseUtil.Wrapper<Long> length = new ParseUtil.Wrapper<>();
                     ParseUtil.parseOperationParameters(input, address, length);
 
-                    //call read or write function
-
-                    Operation o = new Operation();
-                    if (input.contains("read")) {
-                        // call read
-                        o.type = Operation.Type.read;
-                    } else {
-                        // call write
-                        o.type = Operation.Type.write;
-                    }
-
-                    o.address = address.t;
-                    o.length = length.t;
-                    // add each operation to the operations list
-                    operations.add(o);
+                    operations.add(new Operation(address.t, length.t, input.contains("read") ? Operation.Type.read : Operation.Type.write));
                 }
             }
-
         } catch (IOException io){
-            io.printStackTrace();
             System.err.println("Error reading from IO");
             return;
         }

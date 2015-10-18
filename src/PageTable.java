@@ -8,6 +8,29 @@ import java.util.*;
  */
 public class PageTable {
 
+    final Page[] pageArr;
+    final long pageSize;
+
+    private static PageTable pageTable;
+
+    private PageTable(int pageCount, long pageSize){
+        pageArr = new Page[pageCount];
+        for (int i = 0; i < pageCount; i++){
+            Page p = new Page();
+            p.reset();
+            pageArr[i] = p;
+        }
+        this.pageSize = pageSize;
+    }
+
+    public static void init (int pageCount, long pageSize){
+        pageTable = new PageTable(pageCount, pageSize);
+    }
+
+    public static PageTable getInstance(){
+        return pageTable;
+    }
+
     /**
      * Page represents the memory unit in page table
      * */
@@ -34,48 +57,18 @@ public class PageTable {
             return p1.frequency < p2.frequency ? -1 : p1.frequency == p2.frequency ? 0 : 1;
         }
     }
-    
-    final Page[] pageArr;
-    final long pageSize;
 
-    private static PageTable pageTable;
 
-    private PageTable(int pageCount, long pageSize){
-        pageArr = new Page[pageCount];
-        for (int i = 0; i < pageCount; i++){
-            Page p = new Page();
-            p.reset();
-            pageArr[i] = p;
+    public void process(Operation o) {
+        if (o.type == Operation.Type.read) {
+            PageTable.getInstance().read(o.address, o.length);
+        } else {
+            PageTable.getInstance().write(o.address, o.length);
         }
-        this.pageSize = pageSize;
-    }
-
-    public static void init (int pageCount, long pageSize){
-        pageTable = new PageTable(pageCount, pageSize);
-    }
-
-    public static PageTable getInstance(){
-        return pageTable;
     }
 
 
-
-    /**
-     * Get logical page indexes
-     * */
-    private List<Integer> getPageIndexesInLogicalMem(int address, long length) {
-        List<Integer> pages = new LinkedList<>();
-        int start = (int) Math.floor(address / pageSize);
-        int end = (int) (Math.ceil((address + length)/pageSize));
-        for (int i = start; i <= end; i++){
-            pages.add(i);
-        }
-        return pages;
-    }
-
-    
-    public void read(int address, long length){
-
+    private void read(int address, long length){
         List<Integer> pages = getPageIndexesInLogicalMem(address, length);
         // check whether can read directly from main page table
         int readIndex = findPagesFromPageTable(pages);
@@ -98,16 +91,11 @@ public class PageTable {
             kickPages(kickList);
         }
 
-
-
         //write back to page table
         writeBackToPageTable(pages, true);
-
-        //***************************
-
     }
 
-    public void write(int address, long length){
+    private void write(int address, long length){
         //translate the address and length to page numbers in logical memory
         List<Integer> pages = getPageIndexesInLogicalMem(address, length);
 
@@ -132,12 +120,22 @@ public class PageTable {
             kickPages(kickList);
         }
 
-
-
         //write back to page table
         writeBackToPageTable(pages, false);
     }
 
+    /**
+     * Get logical page indexes
+     * */
+    private List<Integer> getPageIndexesInLogicalMem(int address, long length) {
+        List<Integer> pages = new LinkedList<>();
+        int start = (int) Math.floor(address / pageSize);
+        int end = (int) (Math.ceil((address + length)/pageSize));
+        for (int i = start; i <= end; i++){
+            pages.add(i);
+        }
+        return pages;
+    }
 
     /**
      * Find the pages to kick (LRU rule)
@@ -154,7 +152,6 @@ public class PageTable {
                 }
             }
         }
-
     }
 
 
@@ -233,7 +230,6 @@ public class PageTable {
                 if (pageArr[i].pageNo == integer){
                     num--;
                 }
-
             }
         }
 
@@ -245,7 +241,6 @@ public class PageTable {
      * Update pages frequency
      * */
     private void readFromPageTable(List<Integer> pages, boolean isClean) {
-
         updateFrequency(pages, isClean);
     }
 
