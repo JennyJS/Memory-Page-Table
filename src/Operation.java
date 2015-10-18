@@ -12,6 +12,7 @@ public class Operation {
     final long length;
 
     public Operation(int address, long length, Type type){
+
         this.address = address;
         this.length = length;
         this.type = type;

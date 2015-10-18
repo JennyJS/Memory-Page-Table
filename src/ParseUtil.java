@@ -36,7 +36,7 @@ public class ParseUtil {
     }
 
     private static boolean isPowerOf2(long num){
-        return (num & (num - 1)) == 0;
+        return (num != 0 && (num & (num - 1)) == 0);
     }
 
     /**
