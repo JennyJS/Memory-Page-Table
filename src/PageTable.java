@@ -36,16 +36,16 @@ public class PageTable {
     }
     
     final Page[] pageArr;
-    final int pageSize;
+    final long pageSize;
 
     private static PageTable pageTable;
 
-    private PageTable(int pageCount, int pageSize){
+    private PageTable(int pageCount, long pageSize){
         pageArr = new Page[pageCount];
         this.pageSize = pageSize;
     }
 
-    public static void init (int pageCount, int pageSize){
+    public static void init (int pageCount, long pageSize){
         pageTable = new PageTable(pageCount, pageSize);
     }
 
@@ -58,7 +58,7 @@ public class PageTable {
     /**
      * Get logical page indexes
      * */
-    private List<Integer> getPageIndexesInLogicalMem(int address, int length) {
+    private List<Integer> getPageIndexesInLogicalMem(int address, long length) {
         List<Integer> pages = new LinkedList<>();
         int start = (int) Math.floor(address / pageSize);
         int end = (int) (Math.ceil((address + length)/pageSize) - 1);
@@ -69,7 +69,7 @@ public class PageTable {
     }
 
     
-    public void read(int address, int length){
+    public void read(int address, long length){
 
         List<Integer> pages = getPageIndexesInLogicalMem(address, length);
         // check whether can read directly from main page table
@@ -101,7 +101,7 @@ public class PageTable {
 
     }
 
-    public void write(int address, int length){
+    public void write(int address, long length){
         //translate the address and length to page numbers in logical memory
         List<Integer> pages = getPageIndexesInLogicalMem(address, length);
 
@@ -142,6 +142,7 @@ public class PageTable {
                     if (!pageArr[i].isClean) {
                         System.out.println("Writing back to logical memory first for page " + pageArr[i].pageNo);
                     }
+                    System.out.println("Kicking page " + pageArr[i].pageNo + " at physical page number " + pageArr[i]);
                     pageArr[i].reset();
                 }
             }
@@ -160,7 +161,7 @@ public class PageTable {
         }
 
         for (int j = 0; j < numberToKick; j++){
-            Page p = queue.peek();
+            Page p = queue.remove();
             kickList.add(p.pageNo);
         }
 
@@ -174,6 +175,12 @@ public class PageTable {
                 pageArr[i].pageNo = pages.get(indexOfPages);
                 indexOfPages++;
                 pageArr[i].isClean = isClean;
+                if (isClean){
+                    System.out.print("Putting in index " + pageArr[i] + " of the page table. Page number is " + pageArr[i].pageNo + "Clean");
+                } else {
+                    System.out.print("Putting in index " + pageArr[i] + " of the page table. Page number is " + pageArr[i].pageNo + "Dirty");
+                }
+
             }
         }
 
@@ -192,6 +199,12 @@ public class PageTable {
                     pageArr[i].isClean = isClean;
                     pageArr[i].frequency >>= 1;
                     pageArr[i].frequency |= 1 << (pageSize - 1);
+                    if (isClean){
+                        System.out.print("Writing from logical page " + integer + " to physical page " + pageArr[i].pageNo + " Clean");
+                    } else {
+                        System.out.print("Writing from logical page " + integer + " to physical page " + pageArr[i].pageNo + " Dirty");
+                    }
+
                 } else {
                     pageArr[i].frequency >>= 1;
                 }

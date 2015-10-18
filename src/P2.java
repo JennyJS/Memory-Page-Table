@@ -8,7 +8,6 @@ public class P2 {
 
     public static void main(String args[]){
 
-
         ParseUtil.Wrapper<Integer> wordSize = new ParseUtil.Wrapper<>();
         wordSize.t = -1;
 
@@ -23,23 +22,15 @@ public class P2 {
         ParseUtil.parseIntegerFromFile(wordSize, memorySize, pageSize, operations);
 
         int pageCount = (int)(memorySize.t/pageSize.t);
-        PageTable pageTable = new PageTable(pageCount, pageSize);
+        PageTable.init(pageCount, pageSize.t);
 
         for (int i = 0; i < operations.size(); i++){
-            int address = operations.get(i).address;
-            long length = operations.get(i).length;
-            if (operations.get(i).type.equals("read")){
-                
+            Operation o = operations.get(i);
+            if (o.type.equals("read")){
+                PageTable.getPageTable().read(o.address, o.length);
+            } else {
+                PageTable.getPageTable().write(o.address, o.length);
             }
-
         }
-
-
-
-
-
-
     }
-
-
 }

@@ -146,8 +146,7 @@ public class ParseUtil {
                     ParseUtil.Wrapper<Long> length = new ParseUtil.Wrapper<>();
                     ParseUtil.parseOperationParameters(input, address, length);
 
-                    //call read function
-                    //...
+                    //call read or write function
 
                     Operation o = new Operation();
                     if (input.contains("read")) {
