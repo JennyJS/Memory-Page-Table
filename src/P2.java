@@ -34,7 +34,10 @@ public class P2 {
                 System.err.println("Address : 0X" + Integer.toHexString(o.address) + " out of bound!");
                 continue;
             }
+
+            System.out.println(o.type.name() + "(0x" + Integer.toHexString(o.address) + " , " + o.length + ")");
             PageTable.getInstance().process(o);
+            System.out.println();
 
         }
     }
