@@ -10,4 +10,9 @@ public class Operation {
     Type type;
     int address;
     long length;
+
+    @Override
+    public String toString(){
+        return Integer.toHexString(address);
+    }
 }

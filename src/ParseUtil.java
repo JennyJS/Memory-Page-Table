@@ -159,6 +159,8 @@ public class ParseUtil {
 
                     o.address = address.t;
                     o.length = length.t;
+                    // add each operation to the operations list
+                    operations.add(o);
                 }
             }
 
@@ -168,6 +170,6 @@ public class ParseUtil {
             return;
         }
 
-        System.out.println("wordSize: " + wordSize + " memorySize: " + memorySize + " pageSize: " + pageSize);
+        System.out.println("wordSize: " + wordSize.t + " memorySize: " + memorySize.t + " pageSize: " + pageSize.t);
     }
 }

@@ -26,10 +26,10 @@ public class P2 {
 
         for (int i = 0; i < operations.size(); i++){
             Operation o = operations.get(i);
-            if (o.type.equals("read")){
-                PageTable.getPageTable().read(o.address, o.length);
+            if (o.type == Operation.Type.read){
+                PageTable.getInstance().read(o.address, o.length);
             } else {
-                PageTable.getPageTable().write(o.address, o.length);
+                PageTable.getInstance().write(o.address, o.length);
             }
         }
     }

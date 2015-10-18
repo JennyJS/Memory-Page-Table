@@ -14,12 +14,12 @@ public class PageTable {
     private static class Page {
         boolean isClean = true;
         int pageNo;
-        int frequency;
+        long frequency;
 
         private void reset() {
             isClean = true;
             pageNo = -1;
-            frequency = -1;
+            frequency = 0;
         }
 
         private boolean isEmpty() {
@@ -31,7 +31,7 @@ public class PageTable {
     private static class PageComparator implements Comparator<Page>{
         @Override
         public int compare(Page p1, Page p2) {
-            return p1.frequency - p2.frequency;
+            return p1.frequency < p2.frequency ? -1 : p1.frequency == p2.frequency ? 0 : 1;
         }
     }
     
@@ -42,6 +42,11 @@ public class PageTable {
 
     private PageTable(int pageCount, long pageSize){
         pageArr = new Page[pageCount];
+        for (int i = 0; i < pageCount; i++){
+            Page p = new Page();
+            p.reset();
+            pageArr[i] = p;
+        }
         this.pageSize = pageSize;
     }
 
@@ -49,7 +54,7 @@ public class PageTable {
         pageTable = new PageTable(pageCount, pageSize);
     }
 
-    public static PageTable getPageTable(){
+    public static PageTable getInstance(){
         return pageTable;
     }
 
@@ -61,7 +66,7 @@ public class PageTable {
     private List<Integer> getPageIndexesInLogicalMem(int address, long length) {
         List<Integer> pages = new LinkedList<>();
         int start = (int) Math.floor(address / pageSize);
-        int end = (int) (Math.ceil((address + length)/pageSize) - 1);
+        int end = (int) (Math.ceil((address + length)/pageSize));
         for (int i = start; i <= end; i++){
             pages.add(i);
         }
@@ -86,13 +91,14 @@ public class PageTable {
 
         //check my many empty spot left in page table, if smaller than the number we need, call LRU to kick sb out, till enough space
         List<Integer> emptyList = findEmptyBlockInPageTable();
-        List<Integer> kickList = new LinkedList<>();
+        List<Integer> kickList;
         if (emptyList.size() < readIndex){
             kickList = findLRUPagesToKickOff(readIndex - emptyList.size());
+            //real kick
+            kickPages(kickList);
         }
 
-        //real kick
-        kickPages(kickList);
+
 
         //write back to page table
         writeBackToPageTable(pages, true);
@@ -119,16 +125,17 @@ public class PageTable {
 
         //insert page to page table
         List<Integer> emptyList = findEmptyBlockInPageTable();
-        List<Integer> kickList = new LinkedList<>();
+        List<Integer> kickList;
         if (emptyList.size() < writeIndex){
             kickList = findLRUPagesToKickOff(writeIndex - emptyList.size());
+            //kick
+            kickPages(kickList);
         }
 
-        //kick
-        kickPages(kickList);
+
 
         //write back to page table
-        writeBackToPageTable(pages, true);
+        writeBackToPageTable(pages, false);
     }
 
 
@@ -142,7 +149,7 @@ public class PageTable {
                     if (!pageArr[i].isClean) {
                         System.out.println("Writing back to logical memory first for page " + pageArr[i].pageNo);
                     }
-                    System.out.println("Kicking page " + pageArr[i].pageNo + " at physical page number " + pageArr[i]);
+                    System.out.println("Kicking page " + pageArr[i].pageNo + " at physical page number " + pageArr[i].pageNo);
                     pageArr[i].reset();
                 }
             }
@@ -176,11 +183,11 @@ public class PageTable {
                 indexOfPages++;
                 pageArr[i].isClean = isClean;
                 if (isClean){
-                    System.out.print("Putting in index " + pageArr[i] + " of the page table. Page number is " + pageArr[i].pageNo + "Clean");
+                   // System.out.println("Putting in index " + i + " of the page table. Page number is " + pageArr[i].pageNo + " Clean!");
                 } else {
-                    System.out.print("Putting in index " + pageArr[i] + " of the page table. Page number is " + pageArr[i].pageNo + "Dirty");
+                    //System.out.println("Putting in index " + i + " of the page table. Page number is " + pageArr[i].pageNo + " Dirty!");
                 }
-
+                break;
             }
         }
 
@@ -193,16 +200,17 @@ public class PageTable {
      **/
 
     public void updateFrequency (List<Integer> pages, boolean isClean) {
-        for (int i = 0; i < pageArr.length; i++){
-            for(Integer integer : pages){
+        for (Integer integer : pages){
+            for(int i = 0; i < pageArr.length; i++){
                 if (pageArr[i].pageNo == integer){
                     pageArr[i].isClean = isClean;
                     pageArr[i].frequency >>= 1;
-                    pageArr[i].frequency |= 1 << (pageSize - 1);
+                    pageArr[i].frequency |= 1 << (pageArr.length - 1);
+                    //System.out.print("current frequency " + Integer.toBinaryString((int)pageArr[i].frequency));
                     if (isClean){
-                        System.out.print("Writing from logical page " + integer + " to physical page " + pageArr[i].pageNo + " Clean");
+                        System.out.println("Reading from logical page " + integer + " to physical page " + i + " Clean");
                     } else {
-                        System.out.print("Writing from logical page " + integer + " to physical page " + pageArr[i].pageNo + " Dirty");
+                        System.out.println("Writing from logical page " + integer + " to physical page " + i + " Dirty");
                     }
 
                 } else {
@@ -229,7 +237,7 @@ public class PageTable {
             }
         }
 
-        return pages.size() - num;
+        return num;
     }
 
     /**
