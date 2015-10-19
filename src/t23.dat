@@ -1,0 +1,7 @@
+## wordSize is not 16, 32, or 64
+wordSize(4)    		# this can be 16, 32, or 64
+# memorySize can be any power of two, alligned with word size,
+# and less than or equal to logical address
+memorySize(32KB)			# unit can be B, KB, MB, GB, and TB
+pageSize(4KB)
+write(0x4000, 64KB)     # starting address, number of bytes accessed

@@ -83,7 +83,7 @@ public class ParseUtil {
             Queue<Operation> operations
     ){
         try{
-            BufferedReader br = new BufferedReader(new FileReader("/Users/jenny/Java_workspace/COEN283_P2/src/t22.dat"));
+            BufferedReader br = new BufferedReader(new FileReader("/Users/jenny/Java_workspace/COEN283_P2/src/t24.dat"));
             String input;
 
             while((input=br.readLine())!=null){
@@ -104,7 +104,7 @@ public class ParseUtil {
                 // parse wordSize
                 if (wordSize.t == -1){
                     wordSize.t = Integer.parseInt(ParseUtil.getStringInParentheses(input));
-                    if (!isPowerOf2(wordSize.t)){
+                    if (wordSize.t != 16 && wordSize.t != 32 && wordSize.t != 64){
                         throw new IllegalArgumentException("Invalid wordSize: " + wordSize.t);
                     }
                 } else if (memorySize.t == -1){ // parse memorySize
@@ -128,12 +128,14 @@ public class ParseUtil {
                     if (!isPowerOf2(pageSize.t)) {
                         throw new IllegalArgumentException("Invalid pageSize " + memorySize);
                     }
-                } else if (input.contains("read") || input.contains("write")){
+                } else if (input.startsWith("read") || input.startsWith("write")){
                     ParseUtil.Wrapper<Long> address = new ParseUtil.Wrapper<>();
                     ParseUtil.Wrapper<Long> length = new ParseUtil.Wrapper<>();
                     ParseUtil.parseOperationParameters(input, address, length);
 
                     operations.add(new Operation(address.t, length.t, input.contains("read") ? Operation.Type.read : Operation.Type.write));
+                } else {
+                    throw new IllegalArgumentException("Invalid operation " + input);
                 }
             }
         } catch (IOException io){
