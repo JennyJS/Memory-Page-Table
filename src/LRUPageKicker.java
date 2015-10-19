@@ -1,14 +1,11 @@
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 /**
  * Created by jenny on 10/18/15.
  */
 public class LRUPageKicker extends PageKicker {
 
-    public static class LRUPageComparator implements Comparator<PageTable.Page> {
+    private static class LRUPageComparator implements Comparator<PageTable.Page> {
         @Override
         public int compare(PageTable.Page p1, PageTable.Page p2) {
             if (p1.frequency < p2.frequency){
@@ -32,9 +29,7 @@ public class LRUPageKicker extends PageKicker {
         List<Integer> kickList = new LinkedList<>();
         LRUPageComparator LRUPageComparator = new LRUPageComparator();
         PriorityQueue<PageTable.Page> minHeap = new PriorityQueue<>(PageTable.getInstance().pageArr.length, LRUPageComparator);
-        for (int i = 0 ; i < PageTable.getInstance().pageArr.length; i++){
-            minHeap.add(PageTable.getInstance().pageArr[i]);
-        }
+        Collections.addAll(minHeap, PageTable.getInstance().pageArr);
 
         for (int j = 0; j < numberToKick; j++){
             PageTable.Page p = minHeap.remove();

@@ -4,8 +4,8 @@ import java.util.*;
  * Created by jenny on 10/18/15.
  */
 public class OPTPageKicker extends PageKicker {
-    final Queue<Operation> operations;
-    final long pageSize;
+    private final Queue<Operation> operations;
+    private final long pageSize;
 
     public OPTPageKicker(Queue<Operation> operations, long pageSize){
         this.operations = operations;
@@ -34,7 +34,7 @@ public class OPTPageKicker extends PageKicker {
             }
         }
 
-        //buid up a max heap
+        //build up a max heap
         PriorityQueue<Integer> maxHeap = new PriorityQueue<>(PageTable.getInstance().pageArr.length, Collections.reverseOrder());
         maxHeap.addAll(map.keySet());
 
@@ -50,7 +50,7 @@ public class OPTPageKicker extends PageKicker {
 
 
 
-    public List<Integer> pageNumsToBeReferenced (){
+    private List<Integer> pageNumsToBeReferenced(){
         List<Integer> res = new LinkedList<>();
         for (Operation o : operations){
             int pageNo = (int)(o.address / pageSize);

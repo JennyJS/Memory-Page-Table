@@ -1,7 +1,6 @@
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
+import java.io.InputStreamReader;
 import java.util.Queue;
 import java.util.Scanner;
 
@@ -36,8 +35,8 @@ public class ParseUtil {
         return unit;
     }
 
-    private static boolean isPowerOf2(long num){
-        return (num != 0 && (num & (num - 1)) == 0);
+    private static boolean isNotPowerOf2(long num){
+        return (num == 0 || (num & (num - 1)) != 0);
     }
 
     /**
@@ -83,7 +82,7 @@ public class ParseUtil {
             Queue<Operation> operations
     ){
         try{
-            BufferedReader br = new BufferedReader(new FileReader("/Users/jenny/Java_workspace/COEN283_P2/src/t24.dat"));
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             String input;
 
             while((input=br.readLine())!=null){
@@ -116,7 +115,7 @@ public class ParseUtil {
 
 
                     //check validation
-                    if (!isPowerOf2(memorySize.t)){
+                    if (isNotPowerOf2(memorySize.t)){
                         throw new IllegalArgumentException("Invalid memorySize, should be power of 2: " + memorySize.t);
                     }
                 } else if (pageSize.t == -1){ // parse pageSize
@@ -125,7 +124,7 @@ public class ParseUtil {
                     Scanner in = new Scanner(str).useDelimiter("[^0-9]+");
                     int integer = in.nextInt();
                     pageSize.t = integer * unit;
-                    if (!isPowerOf2(pageSize.t)) {
+                    if (isNotPowerOf2(pageSize.t)) {
                         throw new IllegalArgumentException("Invalid pageSize " + memorySize);
                     }
                 } else if (input.startsWith("read") || input.startsWith("write")){

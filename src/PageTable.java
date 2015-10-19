@@ -1,6 +1,5 @@
 
 
-import java.net.Inet4Address;
 import java.util.*;
 
 
@@ -10,7 +9,7 @@ import java.util.*;
 public class PageTable {
 
     final Page[] pageArr;
-    final long pageSize;
+    private final long pageSize;
     private final PageKicker kicker;
 
     private static PageTable pageTable;
@@ -76,8 +75,7 @@ public class PageTable {
 
         //if everything we need to read is in page table, update the frequencies of the pages
         if (readIndex == 0) {
-            boolean keepClean = true;
-            readFromPageTable(pages, keepClean);
+            readFromPageTable(pages, true);
             return;
         }
 
@@ -105,8 +103,7 @@ public class PageTable {
 
         //if everything we need to read is in page table, update the frequencies of the pages
         if (writeIndex == 0) {
-            boolean keepClean = false;
-            readFromPageTable(pages, keepClean);
+            readFromPageTable(pages, false);
             return;
         }
 
@@ -145,7 +142,7 @@ public class PageTable {
     /**
      * Find the pages to kick (LRU rule)
      * */
-    public void kickPages(List<Integer> kickList){
+    private void kickPages(List<Integer> kickList){
         for (int i = 0; i < pageArr.length; i++) {
             for (Integer integer : kickList) {
                 if (pageArr[i].pageNo == integer) {
@@ -161,16 +158,11 @@ public class PageTable {
 
     private void writeBackToPageTable (List<Integer> pages, boolean isClean){
         int indexOfPages = 0;
-        for (int i = 0; i < pageArr.length; i++){
-            if (pageArr[i].isEmpty()){
-                pageArr[i].pageNo = pages.get(indexOfPages);
+        for (Page aPageArr : pageArr) {
+            if (aPageArr.isEmpty()) {
+                aPageArr.pageNo = pages.get(indexOfPages);
                 indexOfPages++;
-                pageArr[i].isClean = isClean;
-                if (isClean){
-                   // System.out.println("Putting in index " + i + " of the page table. Page number is " + pageArr[i].pageNo + " Clean!");
-                } else {
-                    //System.out.println("Putting in index " + i + " of the page table. Page number is " + pageArr[i].pageNo + " Dirty!");
-                }
+                aPageArr.isClean = isClean;
                 break;
             }
         }
@@ -183,20 +175,20 @@ public class PageTable {
      * append 0 to the rest
      **/
 
-    public void updateFrequency (List<Integer> pages, boolean isClean) {
+    private void updateFrequency(List<Integer> pages, boolean isClean) {
         for (Integer integer : pages){
             for(int i = 0; i < pageArr.length; i++){
                 if (pageArr[i].pageNo == integer){
-                    pageArr[i].isClean = isClean;
+                    if (!isClean) {
+                        pageArr[i].isClean = false;
+                    }
                     pageArr[i].frequency >>= 1;
                     pageArr[i].frequency |= 1 << (pageArr.length - 1);
-                    //System.out.print("current frequency " + Integer.toBinaryString((int)pageArr[i].frequency));
                     if (isClean){
-                        System.out.println("\tREAD \t: Logical_Page_No." + integer + " \tPhysical_Page_Index: " + i + " : CLEAN");
+                        System.out.println("\tREAD \t: Logical_Page_No." + integer + " \tPhysical_Page_Index: " + i + " :" + (pageArr[i].isClean ? "CLEAN" : "DIRTY"));
                     } else {
-                        System.out.println("\tWROTE \t: Logical_Page_No." + integer + " \tPhysical_Page_Index: " + i + " : DIRTY");
+                        System.out.println("\tWROTE \t: Logical_Page_No." + integer + " \tPhysical_Page_Index: " + i + " :" + (pageArr[i].isClean ? "CLEAN" : "DIRTY"));
                     }
-
                 } else {
                     pageArr[i].frequency >>= 1;
                 }
@@ -206,15 +198,15 @@ public class PageTable {
 
 
     /**
-     * Check if page table contains data need to read,
-     * return 0 is page table contains all,
-     * else return the number of pages need to lead from logical memory
+     * Check if page table contains data need to read,,
+     * return the number of pages need to lead from logical memory
+     * if we don't need to read load from logical memory, return 0
      * */
     private int findPagesFromPageTable(List<Integer> pages){
         int num = pages.size();
-        for (int i = 0; i < pageArr.length; i++){
-            for (Integer integer : pages){
-                if (pageArr[i].pageNo == integer){
+        for (Page aPageArr : pageArr) {
+            for (Integer integer : pages) {
+                if (aPageArr.pageNo == integer) {
                     num--;
                 }
             }
@@ -236,9 +228,9 @@ public class PageTable {
      * */
     private List<Integer> findEmptyBlockInPageTable() {
         List<Integer> emptyPages = new LinkedList<>();
-        for (int i = 0; i < pageArr.length; i++){
-            if (pageArr[i].isEmpty()){
-                emptyPages.add(pageArr[i].pageNo);
+        for (Page aPageArr : pageArr) {
+            if (aPageArr.isEmpty()) {
+                emptyPages.add(aPageArr.pageNo);
             }
         }
 
