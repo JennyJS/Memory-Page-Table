@@ -56,7 +56,7 @@ public class ParseUtil {
     /**
      * input read(0x230, 8KB), read 0x230 and 8KB
      * */
-    private static void parseOperationParameters(String input, Wrapper<Integer> address, Wrapper<Long> length) {
+    private static void parseOperationParameters(String input, Wrapper<Long> address, Wrapper<Long> length) {
         String str = getStringInParentheses(input);
         String[] readParameter = str.split(",");
         if (readParameter.length != 2){
@@ -65,7 +65,7 @@ public class ParseUtil {
         String addressStr = readParameter[0].trim();
         String lengthStr = readParameter[1].trim();
         String addressInHex = addressStr.split("0x")[1];
-        address.t = Integer.parseInt(addressInHex, 16);
+        address.t = Long.parseLong(addressInHex, 16);
 
         Scanner in = new Scanner(lengthStr).useDelimiter("[^0-9]+");
         int integer = in.nextInt();
@@ -83,7 +83,7 @@ public class ParseUtil {
             Queue<Operation> operations
     ){
         try{
-            BufferedReader br = new BufferedReader(new FileReader("/Users/jenny/Java_workspace/COEN283_P2/src/t20.dat"));
+            BufferedReader br = new BufferedReader(new FileReader("/Users/jenny/Java_workspace/COEN283_P2/src/t22.dat"));
             String input;
 
             while((input=br.readLine())!=null){
@@ -129,7 +129,7 @@ public class ParseUtil {
                         throw new IllegalArgumentException("Invalid pageSize " + memorySize);
                     }
                 } else if (input.contains("read") || input.contains("write")){
-                    ParseUtil.Wrapper<Integer> address = new ParseUtil.Wrapper<>();
+                    ParseUtil.Wrapper<Long> address = new ParseUtil.Wrapper<>();
                     ParseUtil.Wrapper<Long> length = new ParseUtil.Wrapper<>();
                     ParseUtil.parseOperationParameters(input, address, length);
 

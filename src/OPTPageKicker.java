@@ -35,15 +35,14 @@ public class OPTPageKicker extends PageKicker {
         }
 
         //buid up a max heap
-        PriorityQueue<Integer> queue = new PriorityQueue<>(PageTable.getInstance().pageArr.length, Collections.reverseOrder());
-        queue.addAll(map.keySet());
+        PriorityQueue<Integer> maxHeap = new PriorityQueue<>(PageTable.getInstance().pageArr.length, Collections.reverseOrder());
+        maxHeap.addAll(map.keySet());
 
         // remove numToKick number of element from Maxheap
         for (int m = 0; m < numberToKick; m++){
             //pop max from the top of the MaxHeap
-            int tmpKey = queue.remove();
             //add its value(pageNumber) to the list and return
-            kickList.add(map.get(tmpKey));
+            kickList.add(map.get(maxHeap.poll()));
         }
 
         return kickList;

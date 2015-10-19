@@ -31,13 +31,13 @@ public class LRUPageKicker extends PageKicker {
     List<Integer> findPagesToKickOff(int numberToKick) {
         List<Integer> kickList = new LinkedList<>();
         LRUPageComparator LRUPageComparator = new LRUPageComparator();
-        PriorityQueue<PageTable.Page> queue = new PriorityQueue<>(PageTable.getInstance().pageArr.length, LRUPageComparator);
+        PriorityQueue<PageTable.Page> minHeap = new PriorityQueue<>(PageTable.getInstance().pageArr.length, LRUPageComparator);
         for (int i = 0 ; i < PageTable.getInstance().pageArr.length; i++){
-            queue.add(PageTable.getInstance().pageArr[i]);
+            minHeap.add(PageTable.getInstance().pageArr[i]);
         }
 
         for (int j = 0; j < numberToKick; j++){
-            PageTable.Page p = queue.remove();
+            PageTable.Page p = minHeap.remove();
             kickList.add(p.pageNo);
         }
         return kickList;

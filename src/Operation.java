@@ -8,11 +8,10 @@ public class Operation {
     }
 
     final Type type;
-    final int address;
+    final long address;
     final long length;
 
-    public Operation(int address, long length, Type type){
-
+    public Operation(long address, long length, Type type){
         this.address = address;
         this.length = length;
         this.type = type;
@@ -20,6 +19,6 @@ public class Operation {
 
     @Override
     public String toString(){
-        return "0x" + Integer.toHexString(address);
+        return "0x" + Long.toHexString(address);
     }
 }

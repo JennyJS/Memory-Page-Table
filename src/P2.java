@@ -35,16 +35,13 @@ public class P2 {
         System.out.println("***********************************");
         System.out.println("*************** LRU ***************");
         System.out.println("***********************************");
-        while (!operations.isEmpty()) {
-            Operation o = operations.poll();
-            if ((o.address + o.length) > Math.pow(2, wordSize.t)){
-                System.err.println("Address : 0X" + Integer.toHexString(o.address) + " out of bound!");
-                continue;
+        for (Operation o : operations) {
+            try {
+                PageTable.getInstance().process(o, wordSize.t);
+            } catch (RuntimeException e) {
+                System.err.println(e.getMessage());
+                return;
             }
-
-            System.out.println(o.type.name() + "(0x" + Integer.toHexString(o.address) + " , " + o.length + ")");
-            PageTable.getInstance().process(o);
-            System.out.println();
         }
 
         /**
@@ -58,16 +55,12 @@ public class P2 {
         System.out.println("***************************************");
         while (!operations.isEmpty()) {
             Operation o = operations.poll();
-            if ((o.address + o.length) > Math.pow(2, wordSize.t)){
-                System.err.println("Address : 0X" + Integer.toHexString(o.address) + " out of bound!");
-                continue;
+            try {
+                PageTable.getInstance().process(o, wordSize.t);
+            } catch (RuntimeException e) {
+                System.err.println(e.getMessage());
+                return;
             }
-
-            System.out.println(o.type.name() + "(0x" + Integer.toHexString(o.address) + " , " + o.length + "B)");
-            PageTable.getInstance().process(o);
-            System.out.println();
         }
-
-
     }
 }

@@ -1,5 +1,6 @@
 
 
+import java.net.Inet4Address;
 import java.util.*;
 
 
@@ -54,16 +55,21 @@ public class PageTable {
     }
 
 
-    public void process(Operation o) {
+    public void process(Operation o, int wordSize) {
+        System.out.println(o.type.name() + "(0x" + Long.toHexString(o.address) + " , " + o.length + "B)");
+        if ((o.address + o.length) > Math.pow(2, wordSize)){
+            throw new IllegalArgumentException("Address : 0X" + Long.toHexString(o.address) + " Length : 0X" + Long.toHexString(o.length) + " out of bound!");
+        }
         if (o.type == Operation.Type.read) {
             PageTable.getInstance().read(o.address, o.length);
         } else {
             PageTable.getInstance().write(o.address, o.length);
         }
+        System.out.println();
     }
 
 
-    private void read(int address, long length){
+    private void read(long address, long length){
         List<Integer> pages = getPageIndexesInLogicalMem(address, length);
         // check whether can read directly from main page table
         int readIndex = findPagesFromPageTable(pages);
@@ -90,7 +96,7 @@ public class PageTable {
         writeBackToPageTable(pages, true);
     }
 
-    private void write(int address, long length){
+    private void write(long address, long length){
         //translate the address and length to page numbers in logical memory
         List<Integer> pages = getPageIndexesInLogicalMem(address, length);
 
@@ -122,12 +128,16 @@ public class PageTable {
     /**
      * Get logical page indexes
      * */
-    private List<Integer> getPageIndexesInLogicalMem(int address, long length) {
+    private List<Integer> getPageIndexesInLogicalMem(long address, long length) {
         List<Integer> pages = new LinkedList<>();
         int start = (int) Math.floor(address / pageSize);
         int end = (int) (Math.ceil((address + length)/pageSize));
         for (int i = start; i <= end; i++){
             pages.add(i);
+        }
+
+        if (pages.size() > pageArr.length){
+            throw new IllegalArgumentException("Trying to get " + pages.size() + " pages" + " that exceeds physical memory size (" + pageArr.length + " pages)!");
         }
         return pages;
     }
